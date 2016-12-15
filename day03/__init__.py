@@ -106,7 +106,6 @@ def part1():
 def part2():
     sides = sides_by_column(load())
     n = count( s for s in sides if istriangle(*s) )
-    # not 5
     print('Day 3, part 2: %s valid sides (columnar).' % n)
 
 def main():
