@@ -1,6 +1,8 @@
 import os
 import re
 
+alphabet = 'abcdefghijklmnopqrstuvwxyz'
+
 class Room(object):
 
     _room_re = re.compile('^(.*)-(\d+)\[([a-z]+)\]$')
@@ -29,6 +31,7 @@ class Room(object):
         return sorted(sorted(charcounts, key=lambda t: t[0]), key=lambda t: t[1], reverse=True)
 
     def encryptedchecksum(self):
+        "The checksum of the 5 most common characters"
         rv = ''.join(c for i,c in enumerate(char for char,count in self.mostcommon()) if i < 5)
         return rv
 
@@ -43,6 +46,15 @@ class Room(object):
         rv = self.parse_room()
         if rv:
             return rv[1]
+
+    def shiftedindex(self, char, amount):
+        return (alphabet.index(char) + amount) % len(alphabet)
+
+    def unencrypt(self):
+        rv = self.parse_room()
+        if rv:
+            name, sector, _ = rv
+            return ''.join(' ' if char == '-' else alphabet[self.shiftedindex(char, sector)] for char in name)
 
 
 def tests():
@@ -68,9 +80,10 @@ def tests():
 def load():
     return open(os.path.join(os.path.dirname(__file__), 'input.txt')).readlines()
 
-def main():
-    tests()
+def tests2():
+    assert Room('qzmt-zixmtkozy-ivhz-343[zimto]').unencrypt() == 'very encrypted name'
 
+def part1():
     total = 0
     for line in load():
         room = Room(line)
@@ -78,3 +91,17 @@ def main():
             total += room.sectorid()
 
     print('Day 4, part 1: total sector id is %s' % total)
+
+def part2():
+    for line in load():
+        room = Room(line)
+        if not room.is_real():
+            continue
+        if 'northpole' in room.unencrypt().lower():
+            print('Sector ID of %s is %s' % (room.unencrypt(), room.sectorid()))
+
+def main():
+    tests()
+    part1()
+    tests2()
+    part2()
