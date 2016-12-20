@@ -1,5 +1,4 @@
 import os
-from itertools import chain
 
 def _decompress(s, recurse=False):
     stream = iter(s)
