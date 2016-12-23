@@ -1,60 +1,43 @@
+import argparse
 import os
 
 from itertools import combinations
 
-DIRS = UP, DOWN = 1, -1
+class Direction(int):
+
+    def __new__(cls, *args, **kwargs):
+        value, name = args[:2]
+        inst = super(Direction, cls).__new__(cls, value)
+        inst.name = name
+        return inst
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return str(self)
+
+    def __add__(self, other):
+        return self.value + other
+
+
+DIRS = UP, DOWN = Direction(1, 'UP'), Direction(-1, 'DOWN')
 
 from .facility import Facility
-
-def load():
-    return open(os.path.join(os.path.dirname(__file__), 'input.txt')).read()
-
-def indent(fac, n=1):
-    indent = '  ' * n
-    lines = str(fac).splitlines()
-    lines = (indent + line for line in lines)
-    return '\n'.join(lines)
-
-def test1():
-    # Doesn't solve yet but does check that the Facility class reports and
-    # moves it's state correctly.
-
-    text = ("The first floor contains a hydrogen-compatible microchip and a"
-            " lithium-compatible microchip.\n"
-            "The second floor contains a hydrogen generator.\n"
-            "The third floor contains a lithium generator.\n"
-            "The fourth floor contains nothing relevant.\n")
-
-    facility = Facility(text)
-    assert facility.directions() == (UP, )
-
-    line = '-' * 17
-
-    moves = [(UP,   ('HM', )),
-             (UP,   ('HG', 'HM')),
-             (DOWN, ('HM', )),
-             (DOWN, ('HM', )),
-             (UP,   ('HM', 'LM')),
-             (UP,   ('HM', 'LM')),
-             (UP,   ('HM', 'LM')),
-             (DOWN, ('HM', )),
-             (UP,   ('HG', 'LG')),
-             (DOWN, ('LM', )),
-             (UP,   ('HM', 'LM'))]
-    for move in moves:
-        print(line)
-        print(facility)
-        assert not facility.solved()
-        facility = facility.move(*move)
-        assert facility.safe()
-
-    assert facility.directions() == (DOWN, )
-    assert facility.solved()
-    print(line)
-    print(facility)
+from . import astar, tests
+from .utils import *
 
 def part1():
-    facility = Facility(load())
+    start = Facility(load())
+    goal = make_goal(start)
+
+    print(start)
+    print()
+    print(goal)
+    print()
+
+    came_from, cost = astar.find(start, goal)
+    astar.draw(came_from, start, goal)
 
 # 1. elevator capacity two microchips or generators
 # 2. elevator must have at least one microchip or generator to move
@@ -62,5 +45,5 @@ def part1():
 # different generator
 
 def main():
-    test1()
-    part1()
+    tests.run()
+    #part1()

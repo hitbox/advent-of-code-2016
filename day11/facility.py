@@ -12,6 +12,7 @@ class Facility(object):
         self.floors = []
         if text is not None:
             self.parse(text)
+        self._hash = None
 
     def parse(self, text):
         generators = re.compile('(\w+ generator)').findall
@@ -32,9 +33,19 @@ class Facility(object):
             self.dirmap[fn] = DIRS
 
     def __eq__(self, other):
+        if not isinstance(other, Facility):
+            return False
         return (self.elevator == other.elevator
                 and all(set(a) == set(b) for a,b in
                         zip(self.floors, other.floors)))
+
+    def __lt__(self, other):
+        return False
+
+    def __hash__(self):
+        if self._hash is None:
+            self._hash = hash(str(self))
+        return self._hash
 
     def __str__(self):
         nitems = len(self.items())
@@ -48,12 +59,18 @@ class Facility(object):
 
         return '\n'.join(starmap(fmtline, sorted(enumerate(self.floors), reverse=True)))
 
+    def clear(self):
+        self.floors = [set() for _ in range(len(self.floors))]
+
     def copy(self):
         facility = Facility()
         facility.elevator = self.elevator
         facility.floors = copy.deepcopy(self.floors)
         facility.dirmap = self.dirmap
         return facility
+
+    def cost(self, to):
+        return 1
 
     def current(self):
         """
@@ -84,6 +101,21 @@ class Facility(object):
         fac.elevator += direction
         return fac
 
+    def neighbors(self):
+        return self.possibilities()
+
+    def possibilities(self):
+        for direction in self.directions():
+            itemcombos = (combinations(self.current(), r) for r in range(1, 3))
+            for itemcombo in itemcombos:
+                items = tuple(itemcombo)
+                if not items:
+                    continue
+                items = items[0]
+                newfac = self.move(direction, items)
+                if newfac.safe():
+                    yield newfac
+
     def safe(self):
         """
         Is the current state valid/safe?
@@ -92,7 +124,16 @@ class Facility(object):
             gens = ''.join(item[0] for item in items if item[1] == 'G')
             chips = ''.join(item[0] for item in items if item[1] == 'M')
             if chips and gens:
+                # all chips have a corresponding generator
                 if not all(chip in gens for chip in chips):
+                    # THIS IS INCORRECTLY NOT-SAFE-ING:
+                    # F4    .  .  .  .
+                    # F3    LG .  .  .
+                    # F2 E  HG HM LM . (this should be fine)
+                    # F1    .  .  .  .
+                    print('NOT SAFE')
+                    print(self)
+                    print('-----')
                     return False
         return True
 
