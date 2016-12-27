@@ -7,6 +7,8 @@ from . import UP, DOWN, DIRS
 
 class Facility(object):
 
+    FLOORS = {0, 1, 2, 3}
+
     def __init__(self, text=None):
         self.elevator = 0
         self.floors = []
@@ -124,17 +126,21 @@ class Facility(object):
             gens = ''.join(item[0] for item in items if item[1] == 'G')
             chips = ''.join(item[0] for item in items if item[1] == 'M')
             if chips and gens:
-                # all chips have a corresponding generator
-                if not all(chip in gens for chip in chips):
-                    # THIS IS INCORRECTLY NOT-SAFE-ING:
-                    # F4    .  .  .  .
-                    # F3    LG .  .  .
-                    # F2 E  HG HM LM . (this should be fine)
-                    # F1    .  .  .  .
-                    print('NOT SAFE')
-                    print(self)
-                    print('-----')
+                remgens = list(gen for gen in gens if gen not in chips)
+                remchips = list(chip for chip in chips if chip not in gens)
+                if remgens and remchips:
                     return False
+                # # all chips have a corresponding generator
+                # if not all(chip in gens for chip in chips):
+                #     # THIS IS INCORRECTLY NOT-SAFE-ING:
+                #     # F4    .  .  .  .
+                #     # F3    LG .  .  .
+                #     # F2 E  HG HM LM . (this should be fine)
+                #     # F1    .  .  .  .
+                #     print('NOT SAFE')
+                #     print(self)
+                #     print('-----')
+                #     return False
         return True
 
     def solved(self):

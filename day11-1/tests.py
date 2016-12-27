@@ -46,29 +46,16 @@ def test_safe():
     f = Facility("hydrogen-compatible microchip, lithium generator\nhydrogen generator\nlithium microchip\n")
     assert not f.safe()
 
-def test_neighbors():
-    facility = Facility(TEXT)
-
-    print('original')
-    print(facility)
-    print()
-
-    for neighbor in facility.neighbors():
-        print(neighbor)
-        print()
-
 def test2():
     start = Facility(TEXT)
     goal = make_goal(start)
 
     came_from, cost = astar.find(start, goal)
 
-    # astar.find not finding the goal!
-    return
     if came_from and cost:
         astar.draw(came_from, start, goal)
 
 def run():
+    test_safe()
     test1()
-    #test_safe()
-    test_neighbors()
+    test2()

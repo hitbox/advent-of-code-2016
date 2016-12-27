@@ -19,11 +19,9 @@ class PriorityQueue:
 
     def put(self, item, priority):
         heapq.heappush(self.elements, (priority, item))
-        #print(self.elements)
 
     def get(self):
         priority, item = heapq.heappop(self.elements)
-        #print(self.elements)
         return item
 
 
@@ -34,10 +32,11 @@ class Heuristic(object):
         for fn, floor in enumerate(goal.floors, start=1):
             for item in floor:
                 self.cache[item] = fn
+        self.goal = goal
 
     def __call__(self, from_):
-        #cost = 1 + (from_.elevator - to.elevator)
         cost = 0
+        cost = 1 + (from_.elevator - self.goal.elevator)
 
         for fn, floor in enumerate(from_.floors, start=1):
             for item in floor:
@@ -55,23 +54,14 @@ def find(start, goal):
     cost_so_far = {start: 0}
     rank_key = lambda item: item[0]
 
-    cost = None
     while frontier:
         current = frontier.get()
 
-        print(indent('current:', 2))
-        print(indent(current, 2))
-
         if current is goal:
-            print('GOOOOOOOOAL')
             break
 
         for neighbor in current.neighbors():
-            print(indent('neighbor:', 4))
-            print(indent(neighbor, 4))
-
             cost = cost_so_far[current] + current.cost(neighbor)
-            print(indent('cost: %s' % cost, 4))
 
             if neighbor not in cost_so_far or cost < cost_so_far[neighbor]:
                 cost_so_far[neighbor] = cost
