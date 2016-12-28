@@ -2,42 +2,27 @@ import os
 import re
 import heapq
 import math
+from collections import namedtuple
 from itertools import combinations, chain
 
 empty = frozenset()
 
 FLOORS = {0, 1, 2, 3}
 
-_cache = {}
+class Floor(frozenset):
 
-def memoize(f):
-    def memoized(*args, **kwargs):
-        key = (f, args[0], tuple(map(frozenset, args[1:])))
-
-        if key not in _cache:
-            _cache[key] = f(*args, **kwargs)
-
-        return _cache[key]
-    return memoized
+    def __str__(self):
+        return ','.join(self)
 
 
-@memoize
-class State(object):
+_State = namedtuple('_State', 'elevator floors')
 
-    def __init__(self, elevator, *floors):
-        self.elevator = elevator
-        self.floors = tuple(map(frozenset, floors))
+class State(_State):
 
-        self._hash = hash(self.elevator) + hash(self.floors)
-
-    def __hash__(self):
-        return self._hash
-
-    def __iter__(self):
-        return iter((self.elevator, self.floors))
-
-    def __lt__(self, other):
-        return False
+    def __new__(cls, elevator, floors):
+        self = super(State, cls).__new__(cls, elevator, tuple(map(frozenset, floors)))
+        self.__slots__ = ('elevator', 'floors')
+        return self
 
     def __str__(self):
         return self.prettyprint()
@@ -91,7 +76,7 @@ def moves(state):
                     s - stuff if i == E else
                     s
                     for i,s in enumerate(state.floors))
-            neighbor = State(E2, *newfloors)
+            neighbor = State(E2, newfloors)
             if legal(neighbor):
                 yield neighbor
 
@@ -122,28 +107,11 @@ def astar(start):
                 costs[neighbor] = cost
                 previous[neighbor] = current
 
-def tests():
-    assert not legal(State(0, {'RG', 'LM'}, empty, empty, empty))
-
-    start = State(0, {'RG'}, empty, {'RM'}, empty)
-    assert legal(start)
-
-    pathlist = astar(start)
-    for state in pathlist:
-        print(state)
-
-    start = State(0, {'HM', 'LM'}, {'HG'}, {'LG'}, empty)
-    print(start)
-    pathlist = astar(start)
-    for state in pathlist:
-        print(state)
-    print(len(pathlist))
-
 def load():
     return open(os.path.join(os.path.dirname(__file__), 'input.txt')).read()
 
 def parse(text):
-    getthings = re.compile('A (\w+)(?:-COMPATIBLE)? (GENERATOR|MICROCHIP)').findall
+    getthings = re.compile('AN? (\w+)(?:-COMPATIBLE)? (GENERATOR|MICROCHIP)').findall
 
     abbrev2name = {}
     name2abbrev = {}
@@ -161,10 +129,27 @@ def parse(text):
 
     for line in text.upper().splitlines():
         things = getthings(line)
-        yield tuple(abbrevthings(things))
+        yield Floor(abbrevthings(things))
+
+def tests():
+    assert not legal(State(0, ({'RG', 'LM'}, empty, empty, empty)))
+
+    start = State(0, ({'RG'}, empty, {'RM'}, empty))
+    assert legal(start)
+
+    pathlist = astar(start)
+    for state in pathlist:
+        print(state)
+
+    start = State(0, ({'HM', 'LM'}, {'HG'}, {'LG'}, empty))
+    print(start)
+    pathlist = astar(start)
+    for state in pathlist:
+        print(state)
+    print(len(pathlist))
 
 def part1():
-    start = State(0, *(parse(load())))
+    start = State(0, parse(load()))
     print(start)
 
     pathlist = astar(start)
@@ -173,10 +158,21 @@ def part1():
 
     print(len(pathlist) - 1)
 
+def part2():
+    text = """The first floor contains a polonium generator, a thulium generator, a thulium-compatible microchip, a promethium generator, a ruthenium generator, a ruthenium-compatible microchip, a cobalt generator, and a cobalt-compatible microchip. An elerium generator. An elerium-compatible microchip. A dilithium generator. A dilithium-compatible microchip.
+The second floor contains a polonium-compatible microchip and a promethium-compatible microchip.
+The third floor contains nothing relevant.
+The fourth floor contains nothing relevant."""
+
+    start = State(0, tuple(parse(text)))
+    print(start)
+    pathlist = astar(start)
+    for state in pathlist:
+        print(state)
+
+    print(len(pathlist) - 1)
+
 def main():
     #tests()
-
-    state1 = State(0, *(parse(load())))
-    state2 = State(0, *(parse(load())))
-
-    part1()
+    #part1()
+    part2()
