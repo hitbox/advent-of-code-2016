@@ -95,29 +95,58 @@ def part2():
     maze = Maze(isopen)
     moves = Moves(maze)
 
-    previous = {}
-    best = []
+    forks = {}
 
-    def visit(point, last=None, best=None, step=0):
+    paths = {
+        (1,1): {
+            (1,2): None,
+            (2,1): {
+                (2,0): None,
+                (3,1): {
+                    (3,2): {
+                        (4,2): {
+                            (5,2): None,
+                            (4,3): {
+                                (4,4): {
+                                    (5,4): None
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-        if point not in previous:
-            previous[point] = last
+    paths = [
+        [ (1,1), (1,2) ],
+        [ (1,1), (2,1), (2,0) ],
+        [ (1,1), (2,1), (3,1), (3,2), (4,2), (5,2) ],
+        [ (1,1), (2,1), (3,1), (3,2), (4,2), (4,3), (4,4), (5,4) ],
+    ]
 
-        path = getpath(previous, point)
+    def visit(point, step=0):
 
-        if best is None or len(set(path)) > len(set(best)):
-            best = path
+        visited.append(point)
 
-        if step > 49:
-            return best
+        step += 1
+        if step > 8:
+            return
 
-        for neighbor in moves(point):
-            visit(neighbor, point, best, step+1)
+        neighbors = moves(point)
 
+        if len(neighbors) > 1:
+            forks[point] = neighbors
+        elif len(neighbors) > 0:
+            visit(neighbors, step)
+
+            if neighbor not in visited:
+                visit(neighbor, step)
 
     visit((1,1))
-    print(len(best))
+    print(visited)
 
+    best = visited
     width, height = max(p[0] for p in best), max(p[1] for p in best)
     if width < 10:
         width = 10
